@@ -103,23 +103,36 @@
                 window.addEventListener('devicemotion', handleMotion);
             }
 
-            function calculatePunchPower(mass, velocity) {
-                // Kinetic Energy formula: 1/2 * m * v^2
-                // This provides a more realistic baseline
-                const armMass = mass * 0.05; // Approximate arm mass (5% of body mass)
+            function calculatePunchPower(velocity, acceleration) {
+                // Validate inputs
+                if (velocity <= 0 || acceleration <= 0) return 0;
 
-                // Limit velocity to physiologically reasonable range
-                const cappedVelocity = Math.min(velocity, 11); // Max 11 m/s
+                // Typical punching mechanics considerations:
+                const bodyMass = 80; // kg
+                const armMass = bodyMass * 0.05; // Approximate arm mass (5% of body mass)
 
-                // Kinetic Energy calculation with efficiency factor
-                const kineticEnergy = 0.5 * armMass * (cappedVelocity ** 2);
+                // More nuanced effective mass calculation
+                const effectiveMass = Math.min(
+                    armMass + (bodyMass * 0.3),  // Include body weight transfer
+                    bodyMass * 0.7               // Cap at 70% of body mass
+                );
 
-                // Apply a technique efficiency factor (0.3-0.6 range)
-                const efficiencyFactor = 0.4;
+                // Force calculation (F = ma)
+                const force = effectiveMass * acceleration;
 
-                return Math.max(0, kineticEnergy * efficiencyFactor);
+                // Power calculation (P = F × v)
+                const power = force * velocity;
+
+                // Biomechanical efficiency with more dynamic factor
+                const biomechanicalFactor = Math.min(
+                    1 + (velocity / 10),  // Increases with velocity, but caps
+                    2.0  // Maximum biomechanical efficiency multiplier
+                );
+
+                // Return non-negative power with efficiency applied
+                return Math.max(0, power * biomechanicalFactor);
             }
-
+            
             function handleMotion(event) {
                 if (!isTracking) return;
 
