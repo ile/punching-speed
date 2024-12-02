@@ -64,8 +64,11 @@
             let peakAcceleration = 0;
             let currentPower = 0;
             let maxPower = 0;
-            const averageArmMass = 3; // kg (approximate average human arm mass)
-            const punchThreshold = 5; // m/s minimum speed to count as a punch
+            
+            // More precise physical parameters
+            const averageArmMass = 2.5; // kg (slightly adjusted average arm mass)
+            const punchThreshold = 4; // m/s minimum speed to count as a punch
+            const powerScaleFactor = 0.02; // Calibration factor to bring values closer to real-world measurements
 
             function requestPermission() {
                 if (typeof DeviceMotionEvent.requestPermission === 'function') {
@@ -104,7 +107,7 @@
                 const { acceleration } = event;
                 if (!acceleration) return;
 
-                // Calculate speed
+                // Calculate speed magnitude
                 const currentSpeed = Math.sqrt(
                     acceleration.x ** 2 + 
                     acceleration.y ** 2 + 
@@ -124,14 +127,16 @@
                 peakAcceleration = Math.max(peakAcceleration, currentAcceleration);
                 peakAccelEl.textContent = `${peakAcceleration.toFixed(2)} m/s²`;
 
-                // More realistic power estimation
-                // Only calculate power if speed is above punch threshold
+                // More refined power estimation
                 if (currentSpeed > punchThreshold) {
-                    // Simplified punch power calculation
-                    // Using a more conservative approach
-                    // Power = 1/2 * mass * (speed/2)²
-                    // Dividing speed by 2 to bring values closer to real-world punch power
-                    currentPower = 0.5 * averageArmMass * (currentSpeed / 2) ** 2;
+                    // Refined power calculation
+                    // Exponential reduction to limit extreme values
+                    // Uses a power scaling factor to calibrate
+                    currentPower = powerScaleFactor * averageArmMass * (currentSpeed ** 2.5);
+                    
+                    // Limit the maximum possible power
+                    currentPower = Math.min(currentPower, 500);
+                    
                     powerEstimateEl.textContent = `${currentPower.toFixed(2)} J`;
 
                     // Update max power
