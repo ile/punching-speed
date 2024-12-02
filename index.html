@@ -103,7 +103,7 @@
                 window.addEventListener('devicemotion', handleMotion);
             }
 
-            function calculatePunchPower(mass, velocity, acceleration) {
+            function calculatePunchPower(velocity, acceleration) {
                 // Basic power calculation principles
                 // Power = Force × Velocity
                 // Force = Mass × Acceleration
@@ -168,11 +168,10 @@
 
                 // Power estimation with more conservative approach
                 if (instantSpeed > punchThreshold) {
-                    // Refined power calculation
-                    currentPower = averageArmMass *
-                        Math.log(1 + instantSpeed) *
-                        (instantSpeed ** 1.5) *
-                        8; // Slightly reduced scaling factor
+                    currentPower = calculatePunchPower(
+                        instantSpeed,
+                        currentAcceleration
+                    );
 
                     powerEstimateEl.textContent = `${currentPower.toFixed(2)} J`;
 
