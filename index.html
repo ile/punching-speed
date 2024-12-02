@@ -24,8 +24,19 @@
             
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>
+                    <h3 class="font-semibold">Current Speed</h3>
+                    <p id="current-speed" class="text-xl">0 m/s</p>
+                </div>
+                <div>
                     <h3 class="font-semibold">Max Speed</h3>
                     <p id="max-speed" class="text-xl">0 m/s</p>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <h3 class="font-semibold">Current Acceleration</h3>
+                    <p id="current-accel" class="text-xl">0 m/s²</p>
                 </div>
                 <div>
                     <h3 class="font-semibold">Peak Acceleration</h3>
@@ -51,15 +62,17 @@
             const permissionPrompt = document.getElementById('permission-prompt');
             const trackingDisplay = document.getElementById('tracking-display');
             const statusText = document.getElementById('status-text');
+            const currentSpeedEl = document.getElementById('current-speed');
             const maxSpeedEl = document.getElementById('max-speed');
+            const currentAccelEl = document.getElementById('current-accel');
             const peakAccelEl = document.getElementById('peak-accel');
             const powerEstimateEl = document.getElementById('power-estimate');
 
             let isTracking = false;
+            let currentSpeed = 0;
             let maxSpeed = 0;
+            let currentAcceleration = 0;
             let peakAcceleration = 0;
-            let lastVelocity = { x: 0, y: 0, z: 0 };
-            let lastTimestamp = null;
             const averageArmMass = 3; // kg (approximate average human arm mass)
 
             function requestPermission() {
@@ -85,10 +98,10 @@
                 statusText.textContent = 'Tracking';
                 
                 // Reset metrics
+                currentSpeed = 0;
                 maxSpeed = 0;
+                currentAcceleration = 0;
                 peakAcceleration = 0;
-                lastVelocity = { x: 0, y: 0, z: 0 };
-                lastTimestamp = null;
 
                 window.addEventListener('devicemotion', handleMotion);
             }
@@ -97,28 +110,30 @@
                 if (!isTracking) return;
 
                 const { acceleration } = event;
-                const timestamp = event.timeStamp;
+                if (!acceleration) return;
 
-                if (!acceleration || !timestamp) return;
-
-                // Calculate instantaneous speed
-                const currentSpeed = Math.sqrt(
+                // Calculate current speed
+                currentSpeed = Math.sqrt(
                     acceleration.x ** 2 + 
                     acceleration.y ** 2 + 
                     acceleration.z ** 2
                 );
 
-                // Update max speed
+                // Update current and max speed
+                currentSpeedEl.textContent = `${currentSpeed.toFixed(2)} m/s`;
                 maxSpeed = Math.max(maxSpeed, currentSpeed);
                 maxSpeedEl.textContent = `${maxSpeed.toFixed(2)} m/s`;
 
-                // Update peak acceleration
-                const accelMagnitude = Math.sqrt(
+                // Calculate current acceleration
+                currentAcceleration = Math.sqrt(
                     acceleration.x ** 2 + 
                     acceleration.y ** 2 + 
                     acceleration.z ** 2
                 );
-                peakAcceleration = Math.max(peakAcceleration, accelMagnitude);
+
+                // Update current and peak acceleration
+                currentAccelEl.textContent = `${currentAcceleration.toFixed(2)} m/s²`;
+                peakAcceleration = Math.max(peakAcceleration, currentAcceleration);
                 peakAccelEl.textContent = `${peakAcceleration.toFixed(2)} m/s²`;
 
                 // Estimate punch power (very simplified)
@@ -135,7 +150,9 @@
                 trackingDisplay.classList.add('hidden');
                 statusText.textContent = 'Ready';
                 
+                currentSpeedEl.textContent = '0 m/s';
                 maxSpeedEl.textContent = '0 m/s';
+                currentAccelEl.textContent = '0 m/s²';
                 peakAccelEl.textContent = '0 m/s²';
                 powerEstimateEl.textContent = '0 J';
             }
