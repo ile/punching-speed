@@ -70,7 +70,7 @@
 
             // More precise physical parameters
             const averageArmMass = 2.5; // kg (average arm mass)
-            const punchThreshold = 4; // m/s minimum speed to count as a punch
+            const punchThreshold = 3; // m/s minimum speed to count as a punch
 
             function requestPermission() {
                 if (typeof DeviceMotionEvent.requestPermission === 'function') {
@@ -107,16 +107,20 @@
                 const bodyMass = 80; // kg
                 const armMass = bodyMass * 0.05; // 5% of body mass
 
-                // Kinetic Energy: 1/2 * m * v^2
+                // Kinetic Energy baseline
                 const kineticEnergy = 0.5 * armMass * (velocity ** 2);
 
-                // Energy transfer efficiency (typical martial arts efficiency)
-                const efficiencyFactor = 0.3; // 30% energy transfer is realistic
+                // Empirical adjustment factors
+                const impactDuration = 0.01; // typical punch impact time (10ms)
+                const techniqueFactor = 1.5;  // accounts for muscle engagement
+                const efficiencyFactor = 0.6; // energy transfer efficiency
 
-                // Limit velocity to physiological max
-                const cappedVelocity = Math.min(velocity, 10); // max 10 m/s
+                const estimatedPower = kineticEnergy *
+                    techniqueFactor *
+                    efficiencyFactor *
+                    (1 / impactDuration);
 
-                return kineticEnergy * efficiencyFactor;
+                return estimatedPower;
             }
 
             function handleMotion(event) {
