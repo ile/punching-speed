@@ -65,6 +65,7 @@
             let currentPower = 0;
             let maxPower = 0;
             const averageArmMass = 3; // kg (approximate average human arm mass)
+            const punchThreshold = 5; // m/s minimum speed to count as a punch
 
             function requestPermission() {
                 if (typeof DeviceMotionEvent.requestPermission === 'function') {
@@ -123,14 +124,20 @@
                 peakAcceleration = Math.max(peakAcceleration, currentAcceleration);
                 peakAccelEl.textContent = `${peakAcceleration.toFixed(2)} m/s²`;
 
-                // Calculate and update current punch power
-                // Power = 1/2 * mass * velocity²
-                currentPower = 0.5 * averageArmMass * (currentSpeed ** 2);
-                powerEstimateEl.textContent = `${currentPower.toFixed(2)} J`;
+                // More realistic power estimation
+                // Only calculate power if speed is above punch threshold
+                if (currentSpeed > punchThreshold) {
+                    // Simplified punch power calculation
+                    // Using a more conservative approach
+                    // Power = 1/2 * mass * (speed/2)²
+                    // Dividing speed by 2 to bring values closer to real-world punch power
+                    currentPower = 0.5 * averageArmMass * (currentSpeed / 2) ** 2;
+                    powerEstimateEl.textContent = `${currentPower.toFixed(2)} J`;
 
-                // Update max power
-                maxPower = Math.max(maxPower, currentPower);
-                maxPowerEstimateEl.textContent = `${maxPower.toFixed(2)} J`;
+                    // Update max power
+                    maxPower = Math.max(maxPower, currentPower);
+                    maxPowerEstimateEl.textContent = `${maxPower.toFixed(2)} J`;
+                }
             }
 
             function resetTracking() {
