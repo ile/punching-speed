@@ -105,20 +105,19 @@
 
             function calculatePunchPower(velocity, acceleration) {
                 const bodyMass = 80; // kg
-                const armMass = bodyMass * 0.05; // 5% of body mass
+                const armMass = bodyMass * 0.05; // Approximate arm mass
 
                 // Kinetic Energy baseline
                 const kineticEnergy = 0.5 * armMass * (velocity ** 2);
 
-                // Empirical adjustment factors
-                const impactDuration = 0.01; // typical punch impact time (10ms)
-                const techniqueFactor = 1.5;  // accounts for muscle engagement
-                const efficiencyFactor = 0.6; // energy transfer efficiency
+                // Very conservative efficiency factors
+                const efficiencyFactor = 0.1; // Extremely low transfer efficiency
+                const maxPossiblePower = 300;  // Joules cap based on physiological limits
 
-                const estimatedPower = kineticEnergy *
-                    techniqueFactor *
-                    efficiencyFactor *
-                    (1 / impactDuration);
+                const estimatedPower = Math.min(
+                    kineticEnergy * efficiencyFactor,
+                    maxPossiblePower
+                );
 
                 return estimatedPower;
             }
