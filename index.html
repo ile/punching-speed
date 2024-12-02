@@ -103,26 +103,21 @@
                 window.addEventListener('devicemotion', handleMotion);
             }
 
-            function calculatePunchPower(velocity, acceleration) {
-                // Basic power calculation principles
-                // Power = Force × Velocity
-                // Force = Mass × Acceleration
+            function calculatePunchPower(mass, velocity) {
+                // Kinetic Energy formula: 1/2 * m * v^2
+                // This provides a more realistic baseline
+                const armMass = mass * 0.05; // Approximate arm mass (5% of body mass)
 
-                // Typical punching mechanics considerations:
-                const bodyMass = 80; // kg
-                const armMass = bodyMass * 0.05; // Approximate arm mass (5% of body mass)
-                const effectiveMass = Math.min(armMass + (bodyMass * 0.3), bodyMass * 0.7); // Include body weight transfer
+                // Limit velocity to physiologically reasonable range
+                const cappedVelocity = Math.min(velocity, 11); // Max 11 m/s
 
-                // Force calculation (F = ma)
-                const force = effectiveMass * acceleration;
+                // Kinetic Energy calculation with efficiency factor
+                const kineticEnergy = 0.5 * armMass * (cappedVelocity ** 2);
 
-                // Power calculation (P = F × v)
-                const power = force * velocity;
+                // Apply a technique efficiency factor (0.3-0.6 range)
+                const efficiencyFactor = 0.4;
 
-                // Additional scaling to account for biomechanical efficiency
-                const biomechanicalFactor = 1.2; // Accounts for muscle recruitment and technique
-
-                return Math.max(0, power * biomechanicalFactor);
+                return Math.max(0, kineticEnergy * efficiencyFactor);
             }
 
             function handleMotion(event) {
