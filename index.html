@@ -103,6 +103,27 @@
                 window.addEventListener('devicemotion', handleMotion);
             }
 
+            function calculatePunchPower(mass, velocity, acceleration) {
+                // Basic power calculation principles
+                // Power = Force × Velocity
+                // Force = Mass × Acceleration
+
+                // Typical punching mechanics considerations:
+                const bodyMass = 80; // kg
+                const armMass = bodyMass * 0.05; // Approximate arm mass (5% of body mass)
+                const effectiveMass = Math.min(armMass + (bodyMass * 0.3), bodyMass * 0.7); // Include body weight transfer
+
+                // Force calculation (F = ma)
+                const force = effectiveMass * acceleration;
+
+                // Power calculation (P = F × v)
+                const power = force * velocity;
+
+                // Additional scaling to account for biomechanical efficiency
+                const biomechanicalFactor = 1.2; // Accounts for muscle recruitment and technique
+
+                return Math.max(0, power * biomechanicalFactor);
+            }
 
             function handleMotion(event) {
                 if (!isTracking) return;
