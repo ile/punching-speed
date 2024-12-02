@@ -66,9 +66,9 @@
             let maxPower = 0;
             
             // More precise physical parameters
-            const averageArmMass = 2.5; // kg (slightly adjusted average arm mass)
+            const averageArmMass = 2.5; // kg (average arm mass)
             const punchThreshold = 4; // m/s minimum speed to count as a punch
-            const powerScaleFactor = 0.02; // Calibration factor to bring values closer to real-world measurements
+            const maxPossiblePower = 450; // Maximum realistic punch power (around professional boxer level)
 
             function requestPermission() {
                 if (typeof DeviceMotionEvent.requestPermission === 'function') {
@@ -129,13 +129,15 @@
 
                 // More refined power estimation
                 if (currentSpeed > punchThreshold) {
-                    // Refined power calculation
-                    // Exponential reduction to limit extreme values
-                    // Uses a power scaling factor to calibrate
-                    currentPower = powerScaleFactor * averageArmMass * (currentSpeed ** 2.5);
+                    // Logarithmic scaling to provide more nuanced values
+                    // Uses a combination of mass, speed, and logarithmic scaling
+                    currentPower = averageArmMass * 
+                        Math.log(1 + currentSpeed) * 
+                        (currentSpeed ** 1.5) * 
+                        10; // Scaling factor
                     
-                    // Limit the maximum possible power
-                    currentPower = Math.min(currentPower, 500);
+                    // Ensure power is within realistic bounds
+                    currentPower = Math.min(currentPower, maxPossiblePower);
                     
                     powerEstimateEl.textContent = `${currentPower.toFixed(2)} J`;
 
