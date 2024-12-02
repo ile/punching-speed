@@ -139,7 +139,27 @@
                 // Store previous acceleration for next iteration
                 previousAcceleration = acceleration;
 
-                // Rest of your power calculation remains similar...
+                peakAcceleration = Math.max(peakAcceleration, currentAcceleration);
+                peakAccelEl.textContent = `${peakAcceleration.toFixed(2)} m/s²`;
+
+                // More refined power estimation
+                if (currentSpeed > punchThreshold) {
+                    // Logarithmic scaling to provide more nuanced values
+                    // Uses a combination of mass, speed, and logarithmic scaling
+                    currentPower = averageArmMass *
+                        Math.log(1 + currentSpeed) *
+                        (currentSpeed ** 1.5) *
+                        10; // Scaling factor
+
+                    // Ensure power is within realistic bounds
+                    currentPower = Math.min(currentPower, maxPossiblePower);
+
+                    powerEstimateEl.textContent = `${currentPower.toFixed(2)} J`;
+
+                    // Update max power
+                    maxPower = Math.max(maxPower, currentPower);
+                    maxPowerEstimateEl.textContent = `${maxPower.toFixed(2)} J`;
+                }
             }
 
             function resetTracking() {
