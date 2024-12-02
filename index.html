@@ -60,7 +60,6 @@
             const peakAccelEl = document.getElementById('peak-accel');
             const powerEstimateEl = document.getElementById('power-estimate');
             const maxPowerEstimateEl = document.getElementById('max-power-estimate');
-            console.log(peakAccelEl)
 
             let isTracking = false;
             let maxSpeed = 0;
@@ -72,7 +71,6 @@
             // More precise physical parameters
             const averageArmMass = 2.5; // kg (average arm mass)
             const punchThreshold = 4; // m/s minimum speed to count as a punch
-            const maxPossiblePower = 450; // Maximum realistic punch power (around professional boxer level)
 
             function requestPermission() {
                 if (typeof DeviceMotionEvent.requestPermission === 'function') {
@@ -155,14 +153,11 @@
                         (instantSpeed ** 1.5) *
                         8; // Slightly reduced scaling factor
 
-                    // Ensure power is within realistic bounds
-                    currentPower = Math.min(currentPower, maxPossiblePower);
-
                     powerEstimateEl.textContent = `${currentPower.toFixed(2)} J`;
 
                     // Update max power
                     maxPower = Math.max(maxPower, currentPower);
-                    maxPowerEstimateEl.textContent = `${maxPower.toFixed(2)} J`;
+                    maxPowerEstimateEl.textContent = `${maxPower.toFixed(2)} J (${maxSpeed.toFixed(2)} m/s)`;
                 }
 
                 // Store current acceleration for next iteration
