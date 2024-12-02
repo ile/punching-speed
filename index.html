@@ -60,12 +60,14 @@
             const peakAccelEl = document.getElementById('peak-accel');
             const powerEstimateEl = document.getElementById('power-estimate');
             const maxPowerEstimateEl = document.getElementById('max-power-estimate');
+            console.log(peakAccelEl)
 
             let isTracking = false;
             let maxSpeed = 0;
             let peakAcceleration = 0;
             let currentPower = 0;
             let maxPower = 0;
+            let previousAcceleration = { x: 0, y: 0, z: 0 };
 
             // More precise physical parameters
             const averageArmMass = 2.5; // kg (average arm mass)
@@ -103,53 +105,55 @@
                 window.addEventListener('devicemotion', handleMotion);
             }
 
+
             function handleMotion(event) {
                 if (!isTracking) return;
 
                 const { acceleration } = event;
                 if (!acceleration) return;
 
-                // Apply a low-pass filter to reduce noise
-                const alpha = 0.1; // Smoothing factor
-                acceleration.x = alpha * acceleration.x + (1 - alpha) * (previousAcceleration.x || 0);
-                acceleration.y = alpha * acceleration.y + (1 - alpha) * (previousAcceleration.y || 0);
-                acceleration.z = alpha * acceleration.z + (1 - alpha) * (previousAcceleration.z || 0);
 
-                // Subtract gravitational component (roughly 9.8 m/s²)
-                const filteredAccel = {
-                    x: acceleration.x,
-                    y: acceleration.y - 9.8,
-                    z: acceleration.z
+                // Low-pass filter to reduce noise
+                const alpha = 0.2; // Smoothing factor (adjustable)
+                const filteredAcceleration = {
+                    x: alpha * acceleration.x + (1 - alpha) * previousAcceleration.x,
+                    y: alpha * acceleration.y + (1 - alpha) * previousAcceleration.y,
+                    z: alpha * acceleration.z + (1 - alpha) * previousAcceleration.z
                 };
 
-                // More robust speed magnitude calculation
+                // Subtract gravitational component (roughly 9.8 m/s²)
+                const gravityCorrectedAccel = {
+                    x: filteredAcceleration.x,
+                    y: filteredAcceleration.y - 9.8,
+                    z: filteredAcceleration.z
+                };
+
+                // Calculate acceleration magnitude
                 const currentAcceleration = Math.sqrt(
-                    filteredAccel.x ** 2 +
-                    filteredAccel.y ** 2 +
-                    filteredAccel.z ** 2
+                    gravityCorrectedAccel.x ** 2 +
+                    gravityCorrectedAccel.y ** 2 +
+                    gravityCorrectedAccel.z ** 2
                 );
 
-                // Implement a more conservative speed estimation
-                const instantSpeed = Math.min(currentAcceleration * 0.1, 20); // Limit to 20 m/s
+                // Conservative speed estimation
+                // Limit maximum speed to physiologically reasonable range
+                const instantSpeed = Math.min(currentAcceleration * 0.1, 15); // Max 15 m/s
 
-                // Update max speed with more conservative approach
+                // Update max speed
                 maxSpeed = Math.max(maxSpeed, instantSpeed);
                 maxSpeedEl.textContent = `${maxSpeed.toFixed(2)} m/s`;
 
-                // Store previous acceleration for next iteration
-                previousAcceleration = acceleration;
-
+                // Update peak acceleration
                 peakAcceleration = Math.max(peakAcceleration, currentAcceleration);
                 peakAccelEl.textContent = `${peakAcceleration.toFixed(2)} m/s²`;
 
-                // More refined power estimation
-                if (currentSpeed > punchThreshold) {
-                    // Logarithmic scaling to provide more nuanced values
-                    // Uses a combination of mass, speed, and logarithmic scaling
+                // Power estimation with more conservative approach
+                if (instantSpeed > punchThreshold) {
+                    // Refined power calculation
                     currentPower = averageArmMass *
-                        Math.log(1 + currentSpeed) *
-                        (currentSpeed ** 1.5) *
-                        10; // Scaling factor
+                        Math.log(1 + instantSpeed) *
+                        (instantSpeed ** 1.5) *
+                        8; // Slightly reduced scaling factor
 
                     // Ensure power is within realistic bounds
                     currentPower = Math.min(currentPower, maxPossiblePower);
@@ -160,7 +164,15 @@
                     maxPower = Math.max(maxPower, currentPower);
                     maxPowerEstimateEl.textContent = `${maxPower.toFixed(2)} J`;
                 }
+
+                // Store current acceleration for next iteration
+                previousAcceleration = {
+                    x: filteredAcceleration.x,
+                    y: filteredAcceleration.y,
+                    z: filteredAcceleration.z
+                };
             }
+
 
             function resetTracking() {
                 isTracking = false;
