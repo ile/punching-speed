@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Punch Speed Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div id="root" class="bg-white p-6 rounded-lg shadow-lg text-center max-w-md w-full">
+        <h1 class="text-2xl font-bold mb-4">Punch Speed Tracker</h1>
+        
+        <div id="permission-prompt" class="mb-4">
+            <p class="mb-2">To use this app, you'll need to grant motion sensor access.</p>
+            <button id="start-btn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                Start Tracking
+            </button>
+        </div>
+        
+        <div id="tracking-display" class="hidden">
+            <div class="mb-4">
+                <p class="text-lg">Current Status: <span id="status-text">Ready</span></p>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <h3 class="font-semibold">Max Speed</h3>
+                    <p id="max-speed" class="text-xl">0 m/s</p>
+                </div>
+                <div>
+                    <h3 class="font-semibold">Peak Acceleration</h3>
+                    <p id="peak-accel" class="text-xl">0 m/s²</p>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2">Punch Power Estimate</h3>
+                <p id="power-estimate" class="text-2xl font-bold">0 J</p>
+            </div>
+            
+            <button id="reset-btn" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                Reset
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const startBtn = document.getElementById('start-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const permissionPrompt = document.getElementById('permission-prompt');
+            const trackingDisplay = document.getElementById('tracking-display');
+            const statusText = document.getElementById('status-text');
+            const maxSpeedEl = document.getElementById('max-speed');
+            const peakAccelEl = document.getElementById('peak-accel');
+            const powerEstimateEl = document.getElementById('power-estimate');
+
+            let isTracking = false;
+            let maxSpeed = 0;
+            let peakAcceleration = 0;
+            let lastVelocity = { x: 0, y: 0, z: 0 };
+            let lastTimestamp = null;
+            const averageArmMass = 3; // kg (approximate average human arm mass)
+
+            function requestPermission() {
+                if (typeof DeviceMotionEvent.requestPermission === 'function') {
+                    DeviceMotionEvent.requestPermission()
+                        .then(response => {
+                            if (response == 'granted') {
+                                startTracking();
+                            } else {
+                                alert('Motion sensor access denied');
+                            }
+                        })
+                        .catch(console.error);
+                } else {
+                    startTracking();
+                }
+            }
+
+            function startTracking() {
+                permissionPrompt.classList.add('hidden');
+                trackingDisplay.classList.remove('hidden');
+                isTracking = true;
+                statusText.textContent = 'Tracking';
+                
+                // Reset metrics
+                maxSpeed = 0;
+                peakAcceleration = 0;
+                lastVelocity = { x: 0, y: 0, z: 0 };
+                lastTimestamp = null;
+
+                window.addEventListener('devicemotion', handleMotion);
+            }
+
+            function handleMotion(event) {
+                if (!isTracking) return;
+
+                const { acceleration } = event;
+                const timestamp = event.timeStamp;
+
+                if (!acceleration || !timestamp) return;
+
+                // Calculate instantaneous speed
+                const currentSpeed = Math.sqrt(
+                    acceleration.x ** 2 + 
+                    acceleration.y ** 2 + 
+                    acceleration.z ** 2
+                );
+
+                // Update max speed
+                maxSpeed = Math.max(maxSpeed, currentSpeed);
+                maxSpeedEl.textContent = `${maxSpeed.toFixed(2)} m/s`;
+
+                // Update peak acceleration
+                const accelMagnitude = Math.sqrt(
+                    acceleration.x ** 2 + 
+                    acceleration.y ** 2 + 
+                    acceleration.z ** 2
+                );
+                peakAcceleration = Math.max(peakAcceleration, accelMagnitude);
+                peakAccelEl.textContent = `${peakAcceleration.toFixed(2)} m/s²`;
+
+                // Estimate punch power (very simplified)
+                // Power = 1/2 * mass * velocity²
+                const estimatedPower = 0.5 * averageArmMass * (maxSpeed ** 2);
+                powerEstimateEl.textContent = `${estimatedPower.toFixed(2)} J`;
+            }
+
+            function resetTracking() {
+                isTracking = false;
+                window.removeEventListener('devicemotion', handleMotion);
+                
+                permissionPrompt.classList.remove('hidden');
+                trackingDisplay.classList.add('hidden');
+                statusText.textContent = 'Ready';
+                
+                maxSpeedEl.textContent = '0 m/s';
+                peakAccelEl.textContent = '0 m/s²';
+                powerEstimateEl.textContent = '0 J';
+            }
+
+            startBtn.addEventListener('click', requestPermission);
+            resetBtn.addEventListener('click', resetTracking);
+        });
+    </script>
+</body>
+</html>
